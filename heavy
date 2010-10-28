@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+use TraceLoad;
+
+use strict;
+use warnings;
+
+use CPANPLUS;
+
+
+print "OH HAI\n";
+

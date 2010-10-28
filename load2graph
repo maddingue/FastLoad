@@ -1,0 +1,75 @@
+use strict;
+use Data::Dumper;
+use YAML;
+
+
+my @loads = (
+    [ A => "B" ],
+    [ A => "C" ],
+    [ C => "D" ],
+    [ D => "E" ],
+    [ C => "F" ],
+);
+
+    my @load_graph;
+    my @stack = ( \@load_graph );
+    my @callers_stack;
+    my $prev_caller = "";
+    my $prev_callee = "";
+
+    for my $load (@loads) {
+        my $caller = $load->[0];
+        my $callee = $load->[1];
+        print STDERR "* $caller -> $callee -- (@callers_stack)\n";
+
+        if ($caller eq $prev_caller) {
+            push @{ $stack[-1] }, [ $callee ];
+        }
+        elsif ($caller eq $prev_callee) {
+            push @{ $stack[-1][-1] }, [ [ $callee ] ];
+            push @stack, $stack[-1][-1][-1];
+            push @callers_stack, $caller;
+        }
+        else {
+            while (@callers_stack and $callers_stack[-1] ne $caller) {
+                print STDERR "--- (@callers_stack)\n";
+                pop @callers_stack;
+                pop @stack;
+            }
+
+            if ($callers_stack[-1] eq $caller) {
+                push @{ $stack[-1] }, [ $callee ];
+            }
+            else {
+                push @callers_stack, $caller;
+                push @stack, [ [ $callee ] ];
+                push @load_graph, [ $caller => $stack[-1] ];
+            }
+        }
+    print Dumper(\@load_graph), $/;
+
+        $prev_caller = $caller;
+        $prev_callee = $callee;
+    }
+
+
+
+    my @expected = (
+        [ "A" => [
+            [ "B" ],
+            [ "C" => [
+                [ "D" => [
+                    [ "E" ]
+                  ]
+                ],
+                [ "F" ],
+              ]
+            ],
+          ],
+        ]
+    );
+
+
+use Test::More;
+plan tests => 1;
+is_deeply(\@load_graph, \@expected);

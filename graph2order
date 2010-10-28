@@ -1,0 +1,33 @@
+
+
+my @load_graph = (
+    [ A => [
+        [ "B" ],
+        [ C => [
+            [ D => [
+                [ "E" ]
+                ]
+            ],
+            [ "F" ],
+            ]
+        ],
+        ],
+    ]
+);
+
+my @load_order;
+
+sub walk_graph {
+    my ($node) = @_;
+
+    return unless ref $node eq "ARRAY";
+
+    for my $load (@$node) {
+        walk_graph($load->[1]) if ref $load->[1];
+        push @load_order, $load->[0];
+    }
+}
+
+walk_graph(\@load_graph);
+print join $/, @load_order, "";
+
